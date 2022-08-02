@@ -11,7 +11,8 @@ exports.login = async(req, res, next) => {
 
         const token = await jwt.sign({
             userId: user.id,
-        }, jwtSecretKey)
+        }, jwtSecretKey, { expiresIn: 1800 })
+        // 过期可以这样弄 , { expiresIn: 30 }
 
         // 返回响应
         res.status(200).json({
@@ -27,7 +28,7 @@ exports.login = async(req, res, next) => {
 exports.register = async(req, res, next) => {
     try {
         // 数据库存储
-        const user = await User.create(req.body.user).toJSON()
+        const user = (await User.create(req.body.user)).toJSON()
         // 不显示password
         delete user.password;
         // 4. 发送成功响应
@@ -42,9 +43,9 @@ exports.register = async(req, res, next) => {
 // 获取当前用户
 exports.getCurrentUser = async(req, res, next) => {
     try {
-        // 处理请求
-
-        res.send("get /user")
+        res.status(200).json({
+            user: req.user
+        })
     } catch (err) {
         next(err)
     }

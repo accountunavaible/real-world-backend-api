@@ -1,4 +1,6 @@
 const router = require("express").Router();
+const auth = require("../middleware/auth");
+const {createArticleValidator} = require("../validation/article");
 const {getAllArticles, getFeedArticles, getArticle, createArticle, updateArticle, deleteArticle, articlesComments,
     getCommentsForArticle, deleteComment, likeArticle, unLikeArticle
 } = require("../controller/article");
@@ -13,7 +15,7 @@ router.get("/feed", getFeedArticles)
 router.get("/:slug", getArticle)
 
 // 创建文章
-router.post("/", createArticle)
+router.post("/", auth, createArticleValidator ,createArticle)
 
 // 更新文章
 router.put("/:slug", updateArticle)

@@ -1,4 +1,5 @@
 // 获取所有文章
+const {Article, User} = require("../model");
 exports.getAllArticles = async (req, res, next) => {
     try {
         res.send("get /articles")
@@ -20,7 +21,21 @@ exports.getFeedArticles = async (req, res, next) => {
 // 获取一篇文章
 exports.getArticle = async (req, res, next) => {
     try {
-        res.send("get /articles/:slug")
+        const article = await Article.findOne({
+            where: {id: req.params.slug}
+        })
+        const user = (await article.getUser()).toJSON()
+        delete user.password
+        article.userId = user
+        if(!article) {
+            return res.status(404).json({
+                msg: "没有此文章"
+            })
+        }
+
+        res.status(200).json({
+            article
+        })
     } catch (err) {
         next(err);
     }
@@ -29,7 +44,18 @@ exports.getArticle = async (req, res, next) => {
 // 创建文章
 exports.createArticle = async (req, res, next) => {
     try {
-        res.send("post /articles")
+        // 处理请求
+        const article = await Article.create({
+            ...req.body.article,
+            userId: req.user.id
+        });
+        article.userId = await User.findOne({
+            where: {id: req.user.id},
+            attributes: {exclude: ['password']}
+        })
+        res.status(201).json({
+            article
+        })
     } catch (err) {
         next(err);
     }

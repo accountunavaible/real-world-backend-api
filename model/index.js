@@ -17,13 +17,17 @@ sequelize.authenticate()
 
 // 注册模型
 const User = sequelize.define("users", require("./user"))
+const Article = sequelize.define("articles", require("./article"))
+User.hasMany(Article)
+Article.belongsTo(User)
 
 // 同步所有模型模型
-// sequelize.sync().then(() => {
+// sequelize.sync({force: true}).then(() => {
 //     console.log("模型全部同步完毕")
 // })
 
 // 导出所有模型
 module.exports = {
-    User
+    User,
+    Article
 }
