@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const auth = require("../middleware/auth");
-const {createArticleValidator} = require("../validation/article");
+const {createArticleValidator, updateArticleValidator, deleteArticleValidator} = require("../validation/article");
 const {getAllArticles, getFeedArticles, getArticle, createArticle, updateArticle, deleteArticle, articlesComments,
     getCommentsForArticle, deleteComment, likeArticle, unLikeArticle
 } = require("../controller/article");
@@ -18,10 +18,10 @@ router.get("/:slug", getArticle)
 router.post("/", auth, createArticleValidator ,createArticle)
 
 // 更新文章
-router.put("/:slug", updateArticle)
+router.put("/:slug",auth,updateArticleValidator, updateArticle)
 
 // 删除文章
-router.delete("/:slug", deleteArticle)
+router.delete("/:slug", auth, deleteArticleValidator, deleteArticle)
 
 // 创建文章评论
 router.post("/:slug/comments", articlesComments)

@@ -1,8 +1,40 @@
 // 获取所有文章
 const {Article, User} = require("../model");
+const {Op} = require("sequelize")
 exports.getAllArticles = async (req, res, next) => {
     try {
-        res.send("get /articles")
+        // 解析query参数
+        const { limit = 20, offset = 0, tag, author } = req.query
+        const filter = {
+            offset: +offset,
+            limit: +limit,
+            include: {
+                model: User,
+                attributes: {exclude: ['password']}
+            },
+            order: [
+                ['createdAt', 'DESC']
+            ]
+        }
+        if(tag) {
+            filter.where = {
+                tagList: {
+                    [Op.like]: `%${tag}%`
+                }
+            }
+        } else if (author) {
+            const user = await User.findOne({where: {username: author}})
+            filter.where = {
+                userId: user.id
+            }
+        }
+
+        const articles = await Article.findAll(filter)
+        const articlesCount = await Article.count()
+        res.status(200).json({
+            articles,
+            articlesCount
+        })
     } catch (err) {
         next(err);
     }
@@ -11,7 +43,7 @@ exports.getAllArticles = async (req, res, next) => {
 // 获取用户关注的作者文章列表
 exports.getFeedArticles = async (req, res, next) => {
     try {
-        res.send("get /articles/feed")
+        res.status(200).end()
     } catch (err) {
         next(err);
     }
@@ -22,11 +54,15 @@ exports.getFeedArticles = async (req, res, next) => {
 exports.getArticle = async (req, res, next) => {
     try {
         const article = await Article.findOne({
-            where: {id: req.params.slug}
+            where: {id: req.params.slug},
+            include: {
+                model: User,
+                attributes: {exclude: ['password']}
+            },
         })
-        const user = (await article.getUser()).toJSON()
-        delete user.password
-        article.userId = user
+        // const user = (await article.getUser()).toJSON()
+        // delete user.password
+        // article.userId = user
         if(!article) {
             return res.status(404).json({
                 msg: "没有此文章"
@@ -64,7 +100,15 @@ exports.createArticle = async (req, res, next) => {
 // 更新文章
 exports.updateArticle = async (req, res, next) => {
     try {
-        res.send("put /articles/:slug")
+        const article = req.article
+        const bodyArticle = req.body.article
+        article.title = bodyArticle.title || article.title
+        article.description = bodyArticle.description || article.description
+        article.body = bodyArticle.body || article.body
+        await article.save()
+        res.status(201).json({
+            article
+        })
     } catch (err) {
         next(err);
     }
@@ -73,7 +117,10 @@ exports.updateArticle = async (req, res, next) => {
 // 删除文章
 exports.deleteArticle = async (req, res, next) => {
     try {
-        res.send("delete /articles/:slug")
+        req.article.destroy()
+        res.status(200).json({
+            msg: "删除成功"
+        })
     } catch (err) {
         next(err);
     }
@@ -100,7 +147,7 @@ exports.getCommentsForArticle = async (req, res, next) => {
 // 删除评论
 exports.deleteComment = async (req, res, next) => {
     try {
-        res.send("delete /articles/:slug/comments/:id")
+        res.status(200).end()
     } catch (err) {
         next(err);
     }
